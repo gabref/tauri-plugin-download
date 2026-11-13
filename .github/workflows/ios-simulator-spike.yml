@@ -1,0 +1,67 @@
+name: iOS Simulator Spike
+
+on:
+   push:
+      branches: [spike/issue-79-ios-simulator]
+   workflow_dispatch:
+
+permissions:
+   contents: read
+
+jobs:
+   plugin-tests:
+      if: github.repository == 'gabref/tauri-plugin-download'
+      runs-on: macos-15
+      timeout-minutes: 25
+      steps:
+         - uses: actions/checkout@v4
+
+         - uses: actions-rust-lang/setup-rust-toolchain@v1
+           with:
+              toolchain: '1.94.0'
+
+         - name: Prepare the locked Tauri iOS API
+           run: |
+              cargo metadata --locked --format-version 1 --filter-platform aarch64-apple-ios-sim > "$RUNNER_TEMP/metadata.json"
+              python3 - <<'PY'
+              import json, os, pathlib, shutil
+              metadata = json.loads(pathlib.Path(os.environ['RUNNER_TEMP'], 'metadata.json').read_text())
+              tauri = next(p for p in metadata['packages'] if p['name'] == 'tauri')
+              source = pathlib.Path(tauri['manifest_path']).parent / 'mobile' / 'ios-api'
+              destination = pathlib.Path('.tauri/tauri-api')
+              destination.parent.mkdir(exist_ok=True)
+              shutil.copytree(source, destination)
+              print(f'Tauri {tauri["version"]}: {source} -> {destination}')
+              PY
+
+         - name: Select an available iPhone simulator
+           run: |
+              xcodebuild -version
+              xcrun simctl list devices available --json > "$RUNNER_TEMP/simulators.json"
+              python3 - <<'PY'
+              import json, os, pathlib
+              devices = json.loads(pathlib.Path(os.environ['RUNNER_TEMP'], 'simulators.json').read_text())['devices']
+              simulator = next(d for runtime in sorted(devices, reverse=True) if '.iOS-' in runtime
+                               for d in devices[runtime] if d['name'].startswith('iPhone'))
+              with open(os.environ['GITHUB_ENV'], 'a') as env:
+                  env.write(f'SPIKE_SIMULATOR_ID={simulator["udid"]}\n')
+              print(simulator)
+              PY
+
+         - name: Run real plugin handler tests on iOS Simulator
+           working-directory: ios
+           run: |
+              xcodebuild -list
+              xcodebuild test \
+                 -scheme tauri-plugin-download \
+                 -destination "platform=iOS Simulator,id=$SPIKE_SIMULATOR_ID" \
+                 -parallel-testing-enabled NO \
+                 -resultBundlePath "$RUNNER_TEMP/PluginTests.xcresult" \
+                 CODE_SIGNING_ALLOWED=NO
+
+         - name: Upload test results
+           if: always()
+           uses: actions/upload-artifact@v4
+           with:
+              name: ios-plugin-spike-results
+              path: ${{ runner.temp }}/PluginTests.xcresult

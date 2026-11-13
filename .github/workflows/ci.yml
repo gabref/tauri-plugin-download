@@ -1,7 +1,8 @@
 name: CI
 
 on:
-   push: # Runs on push to any branch
+   push: # The temporary spike has its own focused workflow.
+      branches-ignore: [spike/issue-79-ios-simulator]
    pull_request:
       branches: [ "master" ]
 
