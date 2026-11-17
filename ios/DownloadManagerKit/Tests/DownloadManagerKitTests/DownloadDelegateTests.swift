@@ -79,12 +79,13 @@ final class DownloadDelegateTests: XCTestCase {
       let (manager, store, _, delegate, task) = try await fixture()
       task.httpResponse = HTTPURLResponse(url: URL(string: "https://example.com/file")!, statusCode: 404,
          httpVersion: nil, headerFields: nil)
+      let unexpected = await observe(manager) { $0.receivedBytes == 7 }
+      unexpected.isInverted = true
       delegate.urlSession(.shared, downloadTask: task, didWriteData: 7, totalBytesWritten: 7, totalBytesExpectedToWrite: 7)
-      // The rejection happens synchronously in the delegate; no manager task is scheduled.
+      await fulfillment(of: [unexpected], timeout: 0.2)
       let record = await store.findByPath(task.taskDescription!)
       XCTAssertEqual(record?.receivedBytes, 0)
       XCTAssertNil(record?.totalBytes)
-      _ = manager
    }
 
    func testBackgroundCompletionBeforeAndAfterRegistration() async throws {
