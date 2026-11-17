@@ -88,17 +88,30 @@ final class DownloadDelegateTests: XCTestCase {
       XCTAssertNil(record?.totalBytes)
    }
 
-   func testBackgroundCompletionBeforeAndAfterRegistration() async throws {
+   func testBackgroundCompletionIsForwardedToMainThread() async throws {
+      let (manager, _, _, delegate, _) = try await fixture()
+      let done = expectation(description: "Delegate forwards background completion")
+      manager.setBackgroundCompletionHandler {
+         XCTAssertTrue(Thread.isMainThread)
+         done.fulfill()
+      }
+      delegate.urlSessionDidFinishEvents(forBackgroundURLSession: .shared)
+      await fulfillment(of: [done], timeout: 3)
+   }
+
+   func testBackgroundHandlerSupportsBothArrivalOrders() async {
       for completeFirst in [false, true] {
-         let (manager, _, _, delegate, _) = try await fixture()
+         let handler = BackgroundSessionHandler()
          let done = expectation(description: "Background completion delivered once")
          done.assertForOverFulfill = true
-         if completeFirst { delegate.urlSessionDidFinishEvents(forBackgroundURLSession: .shared) }
-         manager.setBackgroundCompletionHandler {
+         // The manager wrappers launch independent Tasks, whose execution order
+         // is unspecified. Await the actor directly to exercise both orders.
+         if completeFirst { await handler.handleComplete() }
+         await handler.set {
             XCTAssertTrue(Thread.isMainThread)
             done.fulfill()
          }
-         if !completeFirst { delegate.urlSessionDidFinishEvents(forBackgroundURLSession: .shared) }
+         if !completeFirst { await handler.handleComplete() }
          await fulfillment(of: [done], timeout: 3)
       }
    }
