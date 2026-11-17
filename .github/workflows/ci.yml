@@ -2,7 +2,7 @@ name: Review regression check
 on: push
 jobs:
    background-order:
-      runs-on: macos-15
+      runs-on: macos-15-intel
       timeout-minutes: 10
       steps:
          - uses: actions/checkout@v4
