@@ -216,6 +216,9 @@ fn ipc_start_pause_resume_and_cancel_reach_the_manager() {
                Err(error) => panic!("accept: {error}"),
             }
          };
+         // Windows can inherit the listener's nonblocking mode. Header reads
+         // below must block, bounded by the read timeout, on every platform.
+         socket.set_nonblocking(false).unwrap();
          socket
             .set_read_timeout(Some(Duration::from_secs(3)))
             .unwrap();
