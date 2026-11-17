@@ -87,8 +87,11 @@ cargo test --workspace
 
 CI runs the TypeScript tests, Rust workspace tests (including documentation tests),
 Android JVM and instrumented tests, the Swift core library tests, and iOS plugin tests.
-Desktop IPC tests use Tauri's mock runtime and a loopback server. Native bridge tests
+The Rust plugin unit, integration, and documentation tests also run on Windows.
+Desktop IPC tests in `tests/ipc.rs` use Tauri's mock runtime and a loopback server. Native bridge tests
 use real Tauri invocation objects and inspect the handlers' serialized responses.
+Rust unit tests check the serialized mobile argument structs against the native JSON
+format. They do not execute the forwarding calls in `src/mobile.rs`.
 
 Run Swift tests (iOS download manager library):
 

@@ -1,4 +1,6 @@
 //! Exercises the registered plugin commands through Tauri's JSON IPC boundary.
+#![cfg(desktop)]
+
 use serde_json::{Value, json};
 use tauri::{Listener, WebviewWindow, test::MockRuntime};
 
@@ -35,7 +37,7 @@ impl Fixture {
       }
       let app = tauri::test::mock_builder()
          .plugin(
-            crate::Builder::new()
+            tauri_plugin_download::Builder::new()
                .on_setup(move |_, config| {
                   config.store_dir(store);
                   config.download_dirs([downloads]);

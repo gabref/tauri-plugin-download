@@ -574,6 +574,3 @@ mod tests {
       assert!(matches!(item.status, DownloadStatus::InProgress));
    }
 }
-
-#[cfg(all(test, desktop))]
-mod ipc_tests;

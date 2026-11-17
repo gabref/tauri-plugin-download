@@ -151,6 +151,7 @@ private final class EventLog {
       defer { lock.unlock() }
       return storage
    }
+
    func append(_ value: String) {
       lock.lock()
       defer { lock.unlock() }
