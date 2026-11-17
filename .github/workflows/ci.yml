@@ -11,4 +11,4 @@ jobs:
               toolchain: '1.94.0'
               cache: true
          - name: Run desktop IPC tests on Windows
-           run: cargo test -p tauri-plugin-download --lib ipc_tests
+           run: python windows_origin_check.py
