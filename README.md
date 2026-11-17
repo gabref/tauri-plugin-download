@@ -990,8 +990,9 @@ On macOS, run the Swift package tests (also run by the macOS CI job):
 swift test --package-path ios/DownloadManagerKit
 ```
 
-These cover the native store and schema, including iOS resume-data fields. The plugin suite runs separately on an iOS simulator; physical network and resume-data
-behavior still need device checks.
+These cover the native store and schema, including iOS resume-data fields. The plugin
+suite runs separately on an iOS simulator; physical network and resume-data behavior
+still need device checks.
 
 ## Development Standards
 
